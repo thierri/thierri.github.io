@@ -15,6 +15,7 @@
       --border: #e7e5e4;
       --accent: #4f46e5;
       --tag-bg: #f1f0ee;
+      --glow: rgba(79, 70, 229, 0.12);
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -25,6 +26,7 @@
         --border: #2a2a2e;
         --accent: #a5b4fc;
         --tag-bg: #232327;
+        --glow: rgba(165, 180, 252, 0.10);
       }
     }
 
@@ -99,6 +101,19 @@
 
     footer { margin-top: 64px; font-size: 0.85rem; color: var(--muted); }
 
+
+    /* Brilho que segue o cursor */
+    .glow {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .4s;
+      background: radial-gradient(600px circle at var(--gx, 50%) var(--gy, 50%), var(--glow), transparent 70%);
+    }
+    .glow.on { opacity: 1; }
+
     @media (prefers-reduced-motion: reduce) {
       .card { transition: none; }
       .card:hover { transform: none; }
@@ -106,6 +121,7 @@
   </style>
 </head>
 <body>
+  <div class="glow" aria-hidden="true"></div>
   <main>
     <header>
       <h1>Thierri Oliveira</h1>
@@ -144,5 +160,31 @@
 
     <footer>© 2026 Thierri Oliveira</footer>
   </main>
+  <script>
+    // Halo suave que acompanha o cursor (só em mouse; desligado com "reduzir movimento").
+    (function () {
+      var glow = document.querySelector('.glow');
+      if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+      var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var x = innerWidth / 2, y = innerHeight / 2, tx = x, ty = y, running = false;
+
+      function draw() {
+        x += (tx - x) * 0.12;
+        y += (ty - y) * 0.12;
+        glow.style.setProperty('--gx', x + 'px');
+        glow.style.setProperty('--gy', y + 'px');
+        if (Math.abs(tx - x) > 0.5 || Math.abs(ty - y) > 0.5) requestAnimationFrame(draw);
+        else running = false;
+      }
+
+      addEventListener('pointermove', function (e) {
+        tx = e.clientX; ty = e.clientY;
+        glow.classList.add('on');
+        if (still) { x = tx; y = ty; draw(); return; }
+        if (!running) { running = true; requestAnimationFrame(draw); }
+      });
+      document.documentElement.addEventListener('mouseleave', function () { glow.classList.remove('on'); });
+    })();
+  </script>
 </body>
 </html>
